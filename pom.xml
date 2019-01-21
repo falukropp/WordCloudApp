@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>se.falukropp</groupId>
+    <artifactId>lucene</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+    <name>lucene</name>
+    <description>Lucene project tester</description>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>2.1.2.RELEASE</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <java.version>1.8</java.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-core</artifactId>
+            <version>6.6.0</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.apache.lucene/lucene-queryparser -->
+        <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-queryparser</artifactId>
+            <version>6.6.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <dependency>
+            <groupId>biz.paluch.logging</groupId>
+            <artifactId>logstash-gelf</artifactId>
+            <version>1.11.1</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+            <!-- <plugin> -->
+            <!-- <groupId>io.fabric8</groupId> -->
+            <!-- <artifactId>docker-maven-plugin</artifactId> -->
+            <!-- <version>0.21.0</version> -->
+
+            <!-- <configuration> -->
+            <!-- <images> -->
+            <!-- <image> -->
+            <!-- <name>my_lucene_tester:${project.version} -->
+            <!-- </name> -->
+            <!-- <alias>lucene-tester</alias> -->
+            <!-- <build> -->
+            <!-- <from>java:8</from> -->
+            <!-- <ports> -->
+            <!-- <port>8080</port> -->
+            <!-- </ports> -->
+            <!-- <env> -->
+            <!-- <SPRING_PROFILES_ACTIVE>docker</SPRING_PROFILES_ACTIVE> -->
+            <!-- </env> -->
+            <!-- <volumes> -->
+            <!-- <volume>/var/lucene-storage</volume> -->
+            <!-- </volumes> -->
+            <!-- <assembly> -->
+            <!-- <descriptorRef>artifact</descriptorRef> -->
+            <!-- </assembly> -->
+            <!-- <cmd>java -jar maven/${project.name}-${project.version}.jar</cmd> -->
+            <!-- </build> -->
+            <!-- </image> -->
+            <!-- </images> -->
+            <!-- </configuration> -->
+            <!-- </plugin> -->
+
+            <!-- https://github.com/spotify/dockerfile-maven -->
+
+            <plugin>
+                <groupId>com.spotify</groupId>
+                <artifactId>dockerfile-maven-plugin</artifactId>
+                <version>1.3.6</version>
+                <executions>
+                    <execution>
+                        <id>default</id>
+                        <goals>
+                            <goal>build</goal>
+                            <goal>push</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <dockerDirectory>${project.basedir}</dockerDirectory>
+                    <repository>falukropp/${project.artifactId}</repository>
+                    <imageName>falukropp/${project.artifactId}</imageName>
+                    <tag>${project.version}</tag>
+                    <buildArgs>
+                        <JAR_FILE>${project.build.finalName}.jar</JAR_FILE>
+                    </buildArgs>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+
+</project>

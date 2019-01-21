@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8"/>
+    <meta content="IE=edge" http-equiv="X-UA-Compatible">
+    <title>Lucene!</title>
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <link href="https://unpkg.com/purecss@1.0.0/build/pure-min.css" rel="stylesheet">
+</head>
+
+<body>
+<form class="pure-form" id="searchForm">
+    <fieldset>
+        <legend>Search</legend>
+
+        <input placeholder="search string..." type="search">
+
+        <button class="pure-button pure-button-primary" type="submit">Search</button>
+    </fieldset>
+</form>
+<form action="/upload" class="pure-form" enctype="multipart/form-data" id="uploadForm" method="post">
+    <fieldset>
+        <legend>Upload</legend>
+
+        <!--  Add support for multiple? -->
+        <input id="file" name="file" type="file"/>
+        <button class="pure-button pure-button-primary" type="submit">Add file to index</button>
+    </fieldset>
+</form>
+</body>
+
+<script>
+
+  function search(e) {
+    const form = e.target
+
+  }
+  document.getElementById("searchForm").addEventListener("submit", search)
+
+</script>
+
+</html>

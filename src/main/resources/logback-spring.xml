@@ -1,0 +1,55 @@
+<!DOCTYPE configuration>
+
+<configuration>
+    <contextName>test</contextName>
+    <jmxConfigurator/>
+
+    <springProperty scope="context" name="GELF_HOST" source="gelf.host" defaultValue="udp:localhost"/>
+    <springProperty scope="context" name="GELF_PORT" source="gelf.port" defaultValue="12201"/>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <!-- encoders are by default assigned the type ch.qos.logback.classic.encoder.PatternLayoutEncoder -->
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="gelf"
+              class="biz.paluch.logging.gelf.logback.GelfLogbackAppender">
+        <host>${GELF_HOST}</host>
+        <port>${GELF_PORT}</port>
+        <version>1.1</version>
+        <facility>java-test</facility>
+        <extractStackTrace>true</extractStackTrace>
+        <filterStackTrace>true</filterStackTrace>
+        <mdcProfiling>true</mdcProfiling>
+        <timestampPattern>yyyy-MM-dd HH:mm:ss,SSSS</timestampPattern>
+        <maximumMessageSize>8192</maximumMessageSize>
+
+        <!-- This are static fields -->
+        <!--
+        <additionalFields>fieldName1=fieldValue1,fieldName2=fieldValue2</additionalFields>
+         -->
+        <!-- Optional: Specify field types -->
+        <!--
+        <additionalFieldTypes>fieldName1=String,fieldName2=Double,fieldName3=Long</additionalFieldTypes>
+         -->
+
+        <!-- This are fields using MDC -->
+        <!--
+        <mdcFields>mdcField1,mdcField2</mdcFields>
+        <dynamicMdcFields>mdc.*,(mdc|MDC)fields</dynamicMdcFields>
+        <includeFullMdc>true</includeFullMdc>
+         -->
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+    </appender>
+
+    <!-- Strictly speaking, the level attribute is not necessary since -->
+    <!-- the level of the root level is set to DEBUG by default. -->
+    <root level="DEBUG">
+        <appender-ref ref="STDOUT"/>
+        <appender-ref ref="gelf"/>
+    </root>
+</configuration>
