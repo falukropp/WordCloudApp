@@ -1,6 +1,5 @@
 package se.falukropp.lucene.web;
 
-import com.fasterxml.jackson.annotation.JsonView;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +15,6 @@ import se.falukropp.lucene.service.StorageService;
 import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.List;
 
 @RestController
 public class WordSearchRestController {
@@ -36,12 +34,10 @@ public class WordSearchRestController {
         indexDirectory.indexDirectory(storageService.getRootLocation());
     }
 
-    @JsonView(IndexDirectory.SearchResult.class)
     @RequestMapping(value = "/search/{word}")
-    public List<SearchResult> searchForWord(@PathVariable String word) {
+    public SearchResult searchForWord(@PathVariable String word) {
 
-        List<SearchResult> searchResult = indexDirectory.searchResult(word);
-        return searchResult;
+        return indexDirectory.searchResult(word);
     }
 
     @PostMapping("/upload")

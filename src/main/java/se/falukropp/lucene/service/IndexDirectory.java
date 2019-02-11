@@ -20,7 +20,6 @@ package se.falukropp.lucene.service;
  * limitations under the License.
  */
 
-import com.fasterxml.jackson.annotation.JsonView;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.*;
@@ -33,6 +32,7 @@ import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.RAMDirectory;
 import org.slf4j.Logger;
@@ -63,7 +63,7 @@ import java.util.List;
 @Component
 public class IndexDirectory {
 
-    static final Logger LOG = LoggerFactory.getLogger(IndexDirectory.class);
+    static private final Logger LOG = LoggerFactory.getLogger(IndexDirectory.class);
 
     private IndexWriter iwriter;
     private Directory directory;
@@ -137,7 +137,7 @@ public class IndexDirectory {
         if (Files.isDirectory(path)) {
             Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
                 @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
                     try {
                         indexDoc(file, attrs.lastModifiedTime().toMillis());
                     } catch (IOException ignore) {
@@ -208,42 +208,56 @@ public class IndexDirectory {
         }
     }
 
-    public List<SearchResult> searchResult(String word) {
+    public SearchResult searchResult(String word) {
+        LOG.debug("Searching for " + word);
+
         DirectoryReader ireader;
-        List<SearchResult> result = new ArrayList<>();
+        int totalHits = 0;
+        List<String> fileNames = new ArrayList<>();
+
         try {
             ireader = DirectoryReader.open(directory);
             IndexSearcher isearcher = new IndexSearcher(ireader);
             // Parse a simple query that searches for "text":
             QueryParser parser = new QueryParser("contents", analyzer);
             org.apache.lucene.search.Query query = parser.parse(word);
-            ScoreDoc[] hits = isearcher.search(query, 1000).scoreDocs;
-            System.out.println("Number of hits : " + hits.length);
+            TopDocs topDocs = isearcher.search(query, 1000);
+
+            totalHits = topDocs.totalHits;
+            ScoreDoc[] hits = topDocs.scoreDocs;
 
             // Iterate through the results:
-            for (int i = 0; i < hits.length; i++) {
-                Document hitDoc = isearcher.doc(hits[i].doc);
-                result.add(new SearchResult(hitDoc.get("path")));
+            for (ScoreDoc hit : hits) {
+                Document hitDoc = isearcher.doc(hit.doc);
+                fileNames.add(hitDoc.get("path"));
             }
             ireader.close();
+
         } catch (IOException | ParseException e) {
             LOG.error("Could not search for word : " + word, e);
         }
-        return result;
+        LOG.debug("Total number of hits : " + totalHits + " in the following files : " + String.join(",", fileNames));
+
+        return new SearchResult(fileNames, totalHits);
+
     }
 
-    // TODO: Copy this to the RESTController. This Component should not know
-    // about JsonView.
     public static class SearchResult {
-        private String file;
+        private final List<String> files;
 
-        SearchResult(String file) {
-            this.file = file;
+        private final int totalHits;
+
+        SearchResult(List<String> files, int totalHits) {
+            this.files = files;
+            this.totalHits = totalHits;
         }
 
-        @JsonView(SearchResult.class)
-        public String getFile() {
-            return file;
+        public List<String> getFile() {
+            return files;
+        }
+
+        public int getTotalHits() {
+            return totalHits;
         }
     }
 }
