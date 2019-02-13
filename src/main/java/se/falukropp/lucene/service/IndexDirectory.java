@@ -212,7 +212,7 @@ public class IndexDirectory {
         LOG.debug("Searching for " + word);
 
         DirectoryReader ireader;
-        int totalHits = 0;
+        long totalHits = 0;
         List<String> fileNames = new ArrayList<>();
 
         try {
@@ -223,7 +223,11 @@ public class IndexDirectory {
             org.apache.lucene.search.Query query = parser.parse(word);
             TopDocs topDocs = isearcher.search(query, 1000);
 
-            totalHits = topDocs.totalHits;
+            Term term = new Term("contents", word);
+            totalHits = ireader.totalTermFreq(term);
+
+
+
             ScoreDoc[] hits = topDocs.scoreDocs;
 
             // Iterate through the results:
@@ -245,9 +249,9 @@ public class IndexDirectory {
     public static class SearchResult {
         private final List<String> files;
 
-        private final int totalHits;
+        private final long totalHits;
 
-        SearchResult(List<String> files, int totalHits) {
+        SearchResult(List<String> files, long totalHits) {
             this.files = files;
             this.totalHits = totalHits;
         }
@@ -256,7 +260,7 @@ public class IndexDirectory {
             return files;
         }
 
-        public int getTotalHits() {
+        public long getTotalHits() {
             return totalHits;
         }
     }

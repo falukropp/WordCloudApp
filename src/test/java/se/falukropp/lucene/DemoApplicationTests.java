@@ -32,7 +32,7 @@ public class DemoApplicationTests {
                 MockMvcRequestBuilders.get("/search/arrival").accept(
                         MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.totalHits").value(4))
+                .andExpect(jsonPath("$.totalHits").value(46))
                 .andDo(print());
     }
 }
