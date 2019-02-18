@@ -1,6 +1,6 @@
 # Köra
 
-Bara att starta DemoApplication
+Bara att starta DemoApplication och gå till localhost:8080
 
 ## För spotify docker build
 ```

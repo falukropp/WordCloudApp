@@ -223,10 +223,8 @@ public class IndexDirectory {
             org.apache.lucene.search.Query query = parser.parse(word);
             TopDocs topDocs = isearcher.search(query, 1000);
 
-            Term term = new Term("contents", word);
+            Term term = new Term("contents", word.toLowerCase());
             totalHits = ireader.totalTermFreq(term);
-
-
 
             ScoreDoc[] hits = topDocs.scoreDocs;
 
