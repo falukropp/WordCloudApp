@@ -10,47 +10,79 @@
 </head>
 
 <body>
-  <form class="pure-form" id="searchForm">
-    <fieldset>
-      <legend>Search</legend>
+  <div>
+    <form class="pure-form" id="searchForm">
+      <fieldset>
+        <legend>Search</legend>
 
-      <input placeholder="search string..." type="search" id="term" name="term" />
+        <input placeholder="search string..." type="search" id="term" name="term" />
 
-      <button class="pure-button pure-button-primary" type="submit">
-        Search
-      </button>
-    </fieldset>
-  </form>
-  <form action="/upload" class="pure-form" enctype="multipart/form-data" id="uploadForm" method="post">
-    <fieldset>
-      <legend>Upload</legend>
+        <button class="pure-button pure-button-primary" type="submit">
+          Search
+        </button>
+      </fieldset>
+    </form>
+    <dl id="searchResults"></dl>
+  </div>
+  <div>
+    <form action="/upload" class="pure-form" enctype="multipart/form-data" id="uploadForm" method="post">
+      <fieldset>
+        <legend>Upload</legend>
 
-      <!--  Add support for multiple? -->
-      <input id="file" name="file" type="file" />
-      <button class="pure-button pure-button-primary" type="submit">
-        Add file to index
-      </button>
-    </fieldset>
-  </form>
+        <!--  Add support for multiple? -->
+        <input id="file" name="file" type="file" />
+        <button class="pure-button pure-button-primary" type="submit">
+          Add file to index
+        </button>
+      </fieldset>
+    </form>
+    <ol id="fileList">
+
+    </ol>
+  </div>
 </body>
 
 <script>
+  function addSearchResult(word, searchResult) {
+    const searchResultList = document.getElementById("searchResults");
+    const wordTerm = document.createElement("dt");
+    wordTerm.appendChild(document.createTextNode(word));
+    const wordHits = document.createElement("dd");
+    wordHits.appendChild(document.createTextNode(`${searchResult.totalHits} hits`));
+    searchResultList.appendChild(wordTerm);
+    searchResultList.appendChild(wordHits);
+  }
+
+  function clearSearchResult() {
+    const searchResultList = document.getElementById("searchResults");
+    while (searchResultList.firstChild) {
+      searchResultList.removeChild(searchResultList.firstChild);
+    }
+
+  }
+
+  function addFileToFileList(file) {
+    const fileList = document.getElementById("fileList");
+    const newFileRow = document.createElement("li");
+    newFileRow.appendChild(document.createTextNode(`${file.name} (${file.size}) bytes`));
+    fileList.appendChild(newFileRow);
+  }
+
   function search(e) {
     const term = document.getElementById("term").value;
 
     fetch(`/search/${term}`)
-      .then(function (response) {
+      .then(response => {
         if (response.ok) {
           return response.json();
         }
         throw new Error(
-          `Network response was not ok... Got ${response.status} ${
-          response.statusText
-          }`
+          `Network response was not ok... Got ${response.status} ${response.statusText}`
         );
       })
-      .then(function (myJson) {
-        console.log(JSON.stringify(myJson));
+      .then(searchResult => {
+        console.log(JSON.stringify(searchResult));
+        addSearchResult(term, searchResult);
       })
       .catch(e => {
         console.log(e);
@@ -59,7 +91,30 @@
     e.preventDefault();
   }
 
+  function uploadFiles(e) {
+    const fileField = document.getElementById("file");
+
+    const formData = new FormData();
+    const file = fileField.files[0];
+    formData.append("file", file);
+
+    fetch('/upload', {
+      method: 'POST',
+      body: formData
+    })
+      .then(response => {
+        console.log(`Uploaded file ${file.name} (${file.size}) bytes`);
+        clearSearchResult();
+        addFileToFileList(file);
+      })
+      .catch(error => console.error('Error:', error));
+
+    e.preventDefault();
+  }
+
   document.getElementById("searchForm").addEventListener("submit", search);
+  document.getElementById("uploadForm").addEventListener("submit", uploadFiles);
+
 </script>
 
 </html>

@@ -6,7 +6,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import se.falukropp.lucene.service.IndexDirectory;
 import se.falukropp.lucene.service.IndexDirectory.SearchResult;
 import se.falukropp.lucene.service.StorageFileNotFoundException;
@@ -41,13 +40,10 @@ public class WordSearchRestController {
     }
 
     @PostMapping("/upload")
-    public ResponseEntity<?> handleFileUpload(@RequestParam("file") MultipartFile file,
-                                              RedirectAttributes redirectAttributes) {
+    public ResponseEntity<?> handleFileUpload(@RequestParam("file") MultipartFile file) {
 
         try {
             Path uploadedFile = storageService.store(file);
-            redirectAttributes.addFlashAttribute("message",
-                    "You successfully uploaded " + file.getOriginalFilename() + "!");
             indexDirectory.indexDoc(uploadedFile);
         } catch (IOException e) {
             LOG.error("Could not upload file " + file.getName(), e);
