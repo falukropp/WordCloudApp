@@ -1,77 +1,65 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8" />
-    <meta content="IE=edge" http-equiv="X-UA-Compatible" />
-    <title>Lucene!</title>
-    <meta content="width=device-width, initial-scale=1" name="viewport" />
-    <link
-      href="https://unpkg.com/purecss@1.0.0/build/pure-min.css"
-      rel="stylesheet"
-    />
-  </head>
 
-  <body>
-    <form class="pure-form" id="searchForm">
-      <fieldset>
-        <legend>Search</legend>
+<head>
+  <meta charset="utf-8" />
+  <meta content="IE=edge" http-equiv="X-UA-Compatible" />
+  <title>Lucene!</title>
+  <meta content="width=device-width, initial-scale=1" name="viewport" />
+  <link href="https://unpkg.com/purecss@1.0.0/build/pure-min.css" rel="stylesheet" />
+</head>
 
-        <input
-          placeholder="search string..."
-          type="search"
-          id="term"
-          name="term"
-        />
+<body>
+  <form class="pure-form" id="searchForm">
+    <fieldset>
+      <legend>Search</legend>
 
-        <button class="pure-button pure-button-primary" type="submit">
-          Search
-        </button>
-      </fieldset>
-    </form>
-    <form
-      action="/upload"
-      class="pure-form"
-      enctype="multipart/form-data"
-      id="uploadForm"
-      method="post"
-    >
-      <fieldset>
-        <legend>Upload</legend>
+      <input placeholder="search string..." type="search" id="term" name="term" />
 
-        <!--  Add support for multiple? -->
-        <input id="file" name="file" type="file" />
-        <button class="pure-button pure-button-primary" type="submit">
-          Add file to index
-        </button>
-      </fieldset>
-    </form>
-  </body>
+      <button class="pure-button pure-button-primary" type="submit">
+        Search
+      </button>
+    </fieldset>
+  </form>
+  <form action="/upload" class="pure-form" enctype="multipart/form-data" id="uploadForm" method="post">
+    <fieldset>
+      <legend>Upload</legend>
 
-  <script>
-    function search(e) {
-      const term = document.getElementById("term").value;
+      <!--  Add support for multiple? -->
+      <input id="file" name="file" type="file" />
+      <button class="pure-button pure-button-primary" type="submit">
+        Add file to index
+      </button>
+    </fieldset>
+  </form>
+</body>
 
-      fetch(`/search/${term}`)
-        .then(function(response) {
-          if (response.ok) {
-            return response.json();
-          }
-          throw new Error(
-            `Network response was not ok... Got ${response.status} ${
-              response.statusText
-            }`
-          );
-        })
-        .then(function(myJson) {
-          console.log(JSON.stringify(myJson));
-        })
-        .catch(e => {
-          console.log(e);
-        });
+<script>
+  function search(e) {
+    const term = document.getElementById("term").value;
 
-      e.preventDefault();
-    }
+    fetch(`/search/${term}`)
+      .then(function (response) {
+        if (response.ok) {
+          return response.json();
+        }
+        throw new Error(
+          `Network response was not ok... Got ${response.status} ${
+          response.statusText
+          }`
+        );
+      })
+      .then(function (myJson) {
+        console.log(JSON.stringify(myJson));
+      })
+      .catch(e => {
+        console.log(e);
+      });
 
-    document.getElementById("searchForm").addEventListener("submit", search);
-  </script>
+    e.preventDefault();
+  }
+
+  document.getElementById("searchForm").addEventListener("submit", search);
+</script>
+
 </html>
