@@ -15,6 +15,7 @@ import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.nio.file.Path;
 
+@CrossOrigin
 @RestController
 public class WordSearchRestController {
 
@@ -40,16 +41,17 @@ public class WordSearchRestController {
     }
 
     @PostMapping("/upload")
-    public ResponseEntity<?> handleFileUpload(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<?> handleFileUpload(@RequestParam("files") MultipartFile[] files) {
 
-        try {
-            Path uploadedFile = storageService.store(file);
-            indexDirectory.indexDoc(uploadedFile);
-        } catch (IOException e) {
-            LOG.error("Could not upload file " + file.getName(), e);
-            throw new RuntimeException(e);
+        for (MultipartFile file : files) {
+            try {
+                Path uploadedFile = storageService.store(file);
+                indexDirectory.indexDoc(uploadedFile);
+            } catch (IOException e) {
+                LOG.error("Could not upload file " + file.getName(), e);
+                throw new RuntimeException(e);
+            }
         }
-
         return ResponseEntity.accepted().build();
     }
 

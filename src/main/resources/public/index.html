@@ -7,54 +7,116 @@
   <title>Lucene!</title>
   <meta content="width=device-width, initial-scale=1" name="viewport" />
   <link href="https://unpkg.com/purecss@1.0.0/build/pure-min.css" rel="stylesheet" />
+  <style>
+    .box {
+      padding: 1em;
+    }
+
+    .button-bar {
+      margin: 0.5em 0 0 0;
+    }
+
+    .button-small {
+      font-size: 60%;
+    }
+
+    .file-list {
+      list-style-type: none;
+      overflow: auto;
+    }
+
+    html,
+    body {
+      height: 100%;
+    }
+
+    .upper {
+      min-height: 40%;
+    }
+
+    .lower {
+      min-height: 60%;
+    }
+  </style>
 </head>
 
 <body>
-  <div>
-    <form class="pure-form" id="searchForm">
-      <fieldset>
-        <legend>Search</legend>
+  <div class="pure-g upper">
+    <div class="pure-u-1-2">
+      <form action="/upload" class="pure-form  box" enctype="multipart/form-data" id="upload-form" method="post">
+        <fieldset>
+          <legend>Upload</legend>
 
-        <input placeholder="search string..." type="search" id="term" name="term" />
+          <!--  Add support for multiple? -->
+          <input id="file" name="file" type="file" multiple />
+          <button class="pure-button pure-button-primary" type="submit">
+            Add file to index
+          </button>
+        </fieldset>
+      </form>
+      <ul id="file-list" class="file-list">
 
-        <button class="pure-button pure-button-primary" type="submit">
-          Search
-        </button>
-      </fieldset>
-    </form>
-    <dl id="searchResults"></dl>
+      </ul>
+    </div>
+    <div class="pure-u-1-2">
+      <form class="pure-form box" id="search-form">
+        <fieldset>
+          <legend>Search in index</legend>
+
+          <input placeholder="search string..." type="search" id="term" name="term" />
+
+          <button class="pure-button pure-button-primary" type="submit" id="search-btn" disabled>
+            Search
+          </button>
+        </fieldset>
+      </form>
+      <div id="search-results-box" style="display:none">
+        <table class="pure-table">
+          <thead>
+            <tr>
+              <th>Word</th>
+              <th>Hits</th>
+            </tr>
+          </thead>
+          <tbody id="search-results">
+
+          </tbody>
+        </table>
+        <div class="button-bar">
+          <button class="pure-button button-small" id="clear-search-btn">
+            Clear Search
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
-  <div>
-    <form action="/upload" class="pure-form" enctype="multipart/form-data" id="uploadForm" method="post">
-      <fieldset>
-        <legend>Upload</legend>
-
-        <!--  Add support for multiple? -->
-        <input id="file" name="file" type="file" />
-        <button class="pure-button pure-button-primary" type="submit">
-          Add file to index
-        </button>
-      </fieldset>
-    </form>
-    <ol id="fileList">
-
-    </ol>
+  <div class="lower">
+    <h1>Placeholder for cool diagram!</h1>
   </div>
 </body>
 
 <script>
+  // Poorest proxy possible!
+  const url_base = "http://localhost:8080";
+
   function addSearchResult(word, searchResult) {
-    const searchResultList = document.getElementById("searchResults");
-    const wordTerm = document.createElement("dt");
-    wordTerm.appendChild(document.createTextNode(word));
-    const wordHits = document.createElement("dd");
-    wordHits.appendChild(document.createTextNode(`${searchResult.totalHits} hits`));
-    searchResultList.appendChild(wordTerm);
-    searchResultList.appendChild(wordHits);
+    document.getElementById('search-results-box').style.display = '';
+
+    const searchResultList = document.getElementById("search-results");
+    const resultsRow = document.createElement("tr");
+    const wordCell = document.createElement("td");
+    wordCell.appendChild(document.createTextNode(word));
+    const hitsCell = document.createElement("td");
+    hitsCell.appendChild(document.createTextNode(`${searchResult.totalHits}`));
+    resultsRow.appendChild(wordCell);
+    resultsRow.appendChild(hitsCell);
+    searchResultList.appendChild(resultsRow);
   }
 
   function clearSearchResult() {
-    const searchResultList = document.getElementById("searchResults");
+    document.getElementById('search-results-box').style.display = 'none';
+
+    const searchResultList = document.getElementById('search-results');
     while (searchResultList.firstChild) {
       searchResultList.removeChild(searchResultList.firstChild);
     }
@@ -62,7 +124,8 @@
   }
 
   function addFileToFileList(file) {
-    const fileList = document.getElementById("fileList");
+    const fileList = document.getElementById("file-list");
+    document.getElementById("search-btn").disabled = false;
     const newFileRow = document.createElement("li");
     newFileRow.appendChild(document.createTextNode(`${file.name} (${file.size}) bytes`));
     fileList.appendChild(newFileRow);
@@ -71,7 +134,7 @@
   function search(e) {
     const term = document.getElementById("term").value;
 
-    fetch(`/search/${term}`)
+    fetch(`${url_base}/search/${term}`)
       .then(response => {
         if (response.ok) {
           return response.json();
@@ -95,25 +158,31 @@
     const fileField = document.getElementById("file");
 
     const formData = new FormData();
-    const file = fileField.files[0];
-    formData.append("file", file);
+    for (var i = 0; i < fileField.files.length; i++) {
+      formData.append("files", fileField.files[i]);
+    }
 
-    fetch('/upload', {
+    fetch(`${url_base}/upload`, {
       method: 'POST',
       body: formData
     })
       .then(response => {
-        console.log(`Uploaded file ${file.name} (${file.size}) bytes`);
         clearSearchResult();
-        addFileToFileList(file);
+        for (var i = 0; i < fileField.files.length; i++) {
+          const file = fileField.files[i];
+          addFileToFileList(file);
+          console.log(`Uploaded file ${file.name} (${file.size}) bytes`);
+        }
+        fileField.value = '';
       })
       .catch(error => console.error('Error:', error));
 
     e.preventDefault();
   }
 
-  document.getElementById("searchForm").addEventListener("submit", search);
-  document.getElementById("uploadForm").addEventListener("submit", uploadFiles);
+  document.getElementById("search-form").addEventListener("submit", search);
+  document.getElementById("upload-form").addEventListener("submit", uploadFiles);
+  document.getElementById("clear-search-btn").addEventListener("click", clearSearchResult);
 
 </script>
 

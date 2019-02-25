@@ -66,7 +66,7 @@ public class DemoApplicationTests {
 
         Path uploadFilePath = Paths.get("src/test/resources/filesToBeUploaded/" + uploadedFileName);
 
-        MockMultipartFile mockMultipartFile = new MockMultipartFile("file", uploadedFileName,
+        MockMultipartFile mockMultipartFile = new MockMultipartFile("files", uploadedFileName,
                 "text/plain", Files.readAllBytes(uploadFilePath));
 
         mockMvc.perform(
