@@ -1,5 +1,6 @@
 package se.falukropp.lucene;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -17,9 +18,11 @@ import se.falukropp.lucene.service.IndexDirectory;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
 
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -88,5 +91,23 @@ public class DemoApplicationTests {
                         MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalHits").value(5));
+    }
+
+    @Test
+    public void testMostCommon() throws Exception {
+
+        List<IndexDirectory.CommonWordResult> expectedResult = Arrays.asList(
+                new IndexDirectory.CommonWordResult("i", 7176),
+                new IndexDirectory.CommonWordResult("he", 4270),
+                new IndexDirectory.CommonWordResult("his", 4221)
+        );
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.get("/common/3").accept(
+                        MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().json(new ObjectMapper().writeValueAsString(expectedResult)))
+                .andDo(print());
+
     }
 }

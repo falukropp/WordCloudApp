@@ -14,6 +14,7 @@ import se.falukropp.lucene.service.StorageService;
 import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 
 @CrossOrigin
 @RestController
@@ -38,6 +39,12 @@ public class WordSearchRestController {
     public SearchResult searchForWord(@PathVariable String word) {
 
         return indexDirectory.searchResult(word);
+    }
+
+    @RequestMapping(value = "/common/{n}")
+    public List<IndexDirectory.CommonWordResult> searchForWord(@PathVariable Integer n) {
+
+        return indexDirectory.mostCommon(n);
     }
 
     @PostMapping("/upload")

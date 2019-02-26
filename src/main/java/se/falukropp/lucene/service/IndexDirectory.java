@@ -28,6 +28,8 @@ import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.IndexWriterConfig.OpenMode;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.misc.HighFreqTerms;
+import org.apache.lucene.misc.TermStats;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.IndexSearcher;
@@ -52,6 +54,7 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Clock;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -205,6 +208,43 @@ public class IndexDirectory {
                 LOG.info("updating " + file);
                 iwriter.updateDocument(new Term("path", file.toString()), doc);
             }
+        }
+    }
+
+    public List<CommonWordResult> mostCommon(int n) {
+        List<CommonWordResult> results = Collections.emptyList();
+        try {
+            DirectoryReader reader = DirectoryReader.open(directory);
+            HighFreqTerms.TotalTermFreqComparator cmp = new HighFreqTerms.TotalTermFreqComparator();
+            TermStats[] highFreqTerms = HighFreqTerms.getHighFreqTerms(reader, n, "contents", cmp);
+
+            results = new ArrayList<>(highFreqTerms.length);
+            for (TermStats ts : highFreqTerms) {
+                results.add(new CommonWordResult(ts.termtext.utf8ToString(), ts.totalTermFreq));
+            }
+        } catch (Exception e) {
+            LOG.error("Could not get most common words : ", e);
+        }
+        return results;
+    }
+
+    public static class CommonWordResult {
+        private final String word;
+
+        private final long totalHits;
+
+
+        public String getWord() {
+            return word;
+        }
+
+        public long getTotalHits() {
+            return totalHits;
+        }
+
+        public CommonWordResult(String word, long totalHits) {
+            this.word = word;
+            this.totalHits = totalHits;
         }
     }
 
