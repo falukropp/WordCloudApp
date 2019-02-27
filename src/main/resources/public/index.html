@@ -37,6 +37,14 @@
     .lower {
       min-height: 60%;
     }
+
+    #barchart {
+      min-height: 300px;
+    }
+
+    .barchart-text {
+      fill: black;
+    }
   </style>
 </head>
 
@@ -92,9 +100,11 @@
   </div>
   <div class="lower">
     <h1>Placeholder for cool diagram!</h1>
+    <svg id="barchart"></svg>
   </div>
 </body>
 
+<script src="https://d3js.org/d3.v5.min.js"></script>
 <script>
   // Poorest proxy possible!
   const url_base = "http://localhost:8080";
@@ -183,6 +193,46 @@
   document.getElementById("search-form").addEventListener("submit", search);
   document.getElementById("upload-form").addEventListener("submit", uploadFiles);
   document.getElementById("clear-search-btn").addEventListener("click", clearSearchResult);
+
+  const test_data = [
+    { word: "i", totalHits: "7179" },
+    { word: "he", totalHits: "4270" },
+    { word: "his", totalHits: "4221" },
+    { word: "Zamboni!", totalHits: "400" },
+  ];
+
+  const graph_height = 300;
+  const bar_width = 30;
+  const max_hits = d3.max(test_data, d => d.totalHits);
+  const yScale = d3.scaleLinear().domain([0, max_hits]).range([0, graph_height]);
+
+  const barGroups = d3.select("#barchart")
+    .selectAll("rect")
+    .data(test_data)
+    .enter()
+    .append("g")
+    .attr("transform", (d, i) => "translate(" + (i * (bar_width + 5)) + ", 0)")
+    ;
+
+  barGroups
+    .append("rect")
+    .attr("width", bar_width)
+    .attr("height", d => yScale(d.totalHits))
+    .style("fill", "lightblue")
+    .style("stroke", "blue")
+    .style("stroke-width", "3px")
+    .style("opacity", .25)
+    //.attr("x", bar_width)
+    .attr("y", d => graph_height - yScale(d.totalHits))
+    ;
+  barGroups
+    .append("text")
+    .attr("class", "barchart-text")
+    .attr("transform", "translate(" + (bar_width - 4) + "," + (graph_height - 4) + ")rotate(-90)")
+    //.style("text-anchor", "middle")
+    .style("font-size", "28px")
+    .text(d => d.word)
+    ;
 
 </script>
 
