@@ -21,6 +21,7 @@ package se.falukropp.lucene.service;
  */
 
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.CharArraySet;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.DirectoryReader;
@@ -35,8 +36,8 @@ import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.store.ByteBuffersDirectory;
 import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.RAMDirectory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -75,8 +76,17 @@ public class IndexDirectory {
     @PostConstruct
     public void init() {
         try {
-            analyzer = new StandardAnalyzer();
-            directory = new RAMDirectory();
+            CharArraySet stopWords = new CharArraySet(StandardAnalyzer.ENGLISH_STOP_WORDS_SET, true);
+            for (char c = 'a'; c <= 'z'; c++) {
+                if (c != 'i') {
+                    stopWords.add(c);
+                }
+            }
+            for (char c = '0'; c <= '9'; c++) {
+                stopWords.add(c);
+            }
+            analyzer = new StandardAnalyzer(stopWords);
+            directory = new ByteBuffersDirectory();
             // To store an index on disk, use this instead:
             // Directory directory = FSDirectory.open("/tmp/testindex");
             IndexWriterConfig config = new IndexWriterConfig(analyzer);

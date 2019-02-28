@@ -39,7 +39,12 @@
     }
 
     #barchart {
-      min-height: 300px;
+      box-sizing: border-box;
+      min-height: 330px;
+      width: 100%;
+      margin: 0.5em;
+      border: 1px solid black;
+      padding: 0.5em;
     }
 
     .barchart-text {
@@ -184,55 +189,95 @@
           console.log(`Uploaded file ${file.name} (${file.size}) bytes`);
         }
         fileField.value = '';
+
+        updateWordCount();
       })
       .catch(error => console.error('Error:', error));
 
     e.preventDefault();
   }
 
+  function updateWordCount() {
+    fetch(`${url_base}/word_count/50`)
+      .then(response => {
+        if (response.ok) {
+          return response.json();
+        }
+        throw new Error(
+          `Network response was not ok... Got ${response.status} ${response.statusText}`
+        );
+      })
+      .then(wordCountResult => {
+        console.log(JSON.stringify(wordCountResult));
+        updateGraph(wordCountResult);
+      })
+      .catch(e => {
+        console.log(e);
+      });
+
+  }
+
   document.getElementById("search-form").addEventListener("submit", search);
   document.getElementById("upload-form").addEventListener("submit", uploadFiles);
   document.getElementById("clear-search-btn").addEventListener("click", clearSearchResult);
 
-  const test_data = [
-    { word: "i", totalHits: "7179" },
-    { word: "he", totalHits: "4270" },
-    { word: "his", totalHits: "4221" },
-    { word: "Zamboni!", totalHits: "400" },
-  ];
+  function updateGraph(test_data) {
+    const graph_height = 300;
+    const bar_width = 30;
+    const max_hits = d3.max(test_data, d => d.totalHits);
+    const yScale = d3.scaleLinear().domain([0, max_hits]).range([0, graph_height]);
 
-  const graph_height = 300;
-  const bar_width = 30;
-  const max_hits = d3.max(test_data, d => d.totalHits);
-  const yScale = d3.scaleLinear().domain([0, max_hits]).range([0, graph_height]);
+    const bars = d3.select("#barchart")
+      .selectAll(".barsAndWords")
+      .data(test_data)
+      ;
 
-  const barGroups = d3.select("#barchart")
-    .selectAll("rect")
-    .data(test_data)
-    .enter()
-    .append("g")
-    .attr("transform", (d, i) => "translate(" + (i * (bar_width + 5)) + ", 0)")
-    ;
+    const newBarGroups = bars
+      .enter()
+      .append("g")
+      .attr("class", "barsAndWords")
+      .attr("transform", (d, i) => "translate(" + (i * (bar_width + 5)) + ", 0)")
+      ;
 
-  barGroups
-    .append("rect")
-    .attr("width", bar_width)
-    .attr("height", d => yScale(d.totalHits))
-    .style("fill", "lightblue")
-    .style("stroke", "blue")
-    .style("stroke-width", "3px")
-    .style("opacity", .25)
-    //.attr("x", bar_width)
-    .attr("y", d => graph_height - yScale(d.totalHits))
-    ;
-  barGroups
-    .append("text")
-    .attr("class", "barchart-text")
-    .attr("transform", "translate(" + (bar_width - 4) + "," + (graph_height - 4) + ")rotate(-90)")
-    //.style("text-anchor", "middle")
-    .style("font-size", "28px")
-    .text(d => d.word)
-    ;
+    newBarGroups
+      .append("rect")
+      .attr("width", bar_width)
+      .attr("height", d => yScale(d.totalHits))
+      .style("fill", "lightblue")
+      .style("stroke", "blue")
+      .style("stroke-width", "3px")
+      .style("opacity", .25)
+      //.attr("x", bar_width)
+      .attr("y", d => graph_height - yScale(d.totalHits))
+      ;
+
+    newBarGroups
+      .append("text")
+      .attr("class", "barchart-text")
+      .attr("transform", "translate(" + (bar_width - 4) + "," + (graph_height - 4) + ")rotate(-90)")
+      //.style("text-anchor", "middle")
+      .style("font-size", "28px")
+      .text(d => d.word)
+      ;
+
+    const removedBarGroups = bars
+      .exit()
+      .remove()
+      ;
+  }
+
+  /*
+    const test_data = [
+      { word: "i", totalHits: "7179" },
+      { word: "he", totalHits: "4270" },
+      { word: "his", totalHits: "4221" },
+      { word: "Zamboni!", totalHits: "400" },
+    ];
+
+  updateData(test_data);
+    */
+
+  // update_data(test_data.slice(2));
 
 </script>
 

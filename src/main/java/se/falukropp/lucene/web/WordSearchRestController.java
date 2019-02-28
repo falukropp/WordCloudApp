@@ -41,8 +41,8 @@ public class WordSearchRestController {
         return indexDirectory.searchResult(word);
     }
 
-    @RequestMapping(value = "/common/{n}")
-    public List<IndexDirectory.CommonWordResult> searchForWord(@PathVariable Integer n) {
+    @RequestMapping(value = "/word_count/{n}")
+    public List<IndexDirectory.CommonWordResult> wordCount(@PathVariable Integer n) {
 
         return indexDirectory.mostCommon(n);
     }

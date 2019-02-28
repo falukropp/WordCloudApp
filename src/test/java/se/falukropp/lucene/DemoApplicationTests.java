@@ -103,7 +103,7 @@ public class DemoApplicationTests {
         );
 
         mockMvc.perform(
-                MockMvcRequestBuilders.get("/common/3").accept(
+                MockMvcRequestBuilders.get("/word_count/3").accept(
                         MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().json(new ObjectMapper().writeValueAsString(expectedResult)))
