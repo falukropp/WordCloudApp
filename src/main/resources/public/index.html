@@ -31,24 +31,42 @@
     }
 
     .upper {
-      min-height: 40%;
+      min-height: 38%;
     }
 
     .lower {
-      min-height: 60%;
+      min-height: 58%;
     }
 
     #barchart {
       box-sizing: border-box;
       min-height: 330px;
-      width: 100%;
-      margin: 0.5em;
+      width: 98%;
+      margin: 0 1%;
       border: 1px solid black;
       padding: 0.5em;
     }
 
     .barchart-text {
       fill: black;
+    }
+
+    /* https://www.flexboxpatterns.com/tabs */
+
+    .tabs {
+      display: flex;
+
+      border-bottom: 1px solid #D7DBDD;
+    }
+
+    .tab {
+      cursor: pointer;
+      padding: 5px 30px;
+      border-bottom: 2px solid transparent;
+    }
+
+    .tab.tab-is-selected {
+      border-bottom-color: #4EBBE4;
     }
   </style>
 </head>
@@ -103,9 +121,21 @@
       </div>
     </div>
   </div>
+
   <div class="lower">
-    <h1>Placeholder for cool diagram!</h1>
-    <svg id="barchart"></svg>
+    <div class="tabs" id="diagram-tabs">
+      <div class="tab tab-is-selected" id="barchart-tab">Barchart</div>
+      <div class="tab" id="wordcloud-tab">Wordcloud</div>
+    </div>
+
+    <div id="barchart-box">
+      <h1>Most common words</h1>
+      <svg id="barchart"></svg>
+    </div>
+
+    <div id="wordcloud-box" style="display:none">
+      <h1>Wordcloddd!</h1>
+    </div>
   </div>
 </body>
 
@@ -217,10 +247,6 @@
 
   }
 
-  document.getElementById("search-form").addEventListener("submit", search);
-  document.getElementById("upload-form").addEventListener("submit", uploadFiles);
-  document.getElementById("clear-search-btn").addEventListener("click", clearSearchResult);
-
   function updateGraph(test_data) {
     const graph_height = 300;
     const bar_width = 30;
@@ -265,6 +291,37 @@
       .remove()
       ;
   }
+
+  function selectDiagram(e) {
+    const target = e.target;
+    if (!target.classList.contains('tab')) {
+      return;
+    }
+
+    function getCorrespondingBox(tab) {
+      const boxId = tab.id.split('-')[0] + '-box';
+      return document.getElementById(boxId);
+    }
+
+    [...document.getElementsByClassName('tab-is-selected')].forEach(
+      t => {
+        getCorrespondingBox(t).style.display = 'none';
+        t.classList.remove('tab-is-selected');
+      }
+    );
+
+    target.classList.add('tab-is-selected');
+    getCorrespondingBox(target).style.display = 'block';
+  }
+
+  document.getElementById("search-form").addEventListener("submit", search);
+  document.getElementById("upload-form").addEventListener("submit", uploadFiles);
+  document.getElementById("clear-search-btn").addEventListener("click", clearSearchResult);
+  document.getElementById("diagram-tabs").addEventListener("click", selectDiagram);
+
+  // document.getElementById("barchart-tab").addEventListener("click", selectDiagram('barchart'));
+  // document.getElementById("wordcloud-tab").addEventListener("click", selectDiagram('wordcloud'));
+
 
   /*
     const test_data = [
