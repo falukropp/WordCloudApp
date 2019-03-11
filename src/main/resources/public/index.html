@@ -7,6 +7,8 @@
   <title>Lucene!</title>
   <meta content="width=device-width, initial-scale=1" name="viewport" />
   <link href="https://unpkg.com/purecss@1.0.0/build/pure-min.css" rel="stylesheet" />
+  <!-- https://github.com/jasondavies/d3-cloud -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-cloud/1.2.5/d3.layout.cloud.min.js"></script>
   <style>
     .box {
       padding: 1em;
@@ -38,7 +40,7 @@
       min-height: 58%;
     }
 
-    #barchart {
+    .graph {
       box-sizing: border-box;
       min-height: 330px;
       width: 98%;
@@ -124,17 +126,18 @@
 
   <div class="lower">
     <div class="tabs" id="diagram-tabs">
-      <div class="tab tab-is-selected" id="barchart-tab">Barchart</div>
-      <div class="tab" id="wordcloud-tab">Wordcloud</div>
+      <div class="tab" id="barchart-tab">Barchart</div>
+      <div class="tab tab-is-selected" id="wordcloud-tab">Wordcloud</div>
     </div>
 
-    <div id="barchart-box">
+    <div id="barchart-box" style="display:none">
       <h1>Most common words</h1>
-      <svg id="barchart"></svg>
+      <svg id="barchart" class="graph"></svg>
     </div>
 
-    <div id="wordcloud-box" style="display:none">
-      <h1>Wordcloddd!</h1>
+    <div id="wordcloud-box">
+      <h1>Wordcloud!</h1>
+      <svg id="wordcloud" class="graph"></svg>
     </div>
   </div>
 </body>
@@ -202,27 +205,30 @@
   function uploadFiles(e) {
     const fileField = document.getElementById("file");
 
-    const formData = new FormData();
-    for (var i = 0; i < fileField.files.length; i++) {
-      formData.append("files", fileField.files[i]);
-    }
+    if (fileField.files.length > 0) {
 
-    fetch(`${url_base}/upload`, {
-      method: 'POST',
-      body: formData
-    })
-      .then(response => {
-        clearSearchResult();
-        for (var i = 0; i < fileField.files.length; i++) {
-          const file = fileField.files[i];
-          addFileToFileList(file);
-          console.log(`Uploaded file ${file.name} (${file.size}) bytes`);
-        }
-        fileField.value = '';
+      const formData = new FormData();
+      for (var i = 0; i < fileField.files.length; i++) {
+        formData.append("files", fileField.files[i]);
+      }
 
-        updateWordCount();
+      fetch(`${url_base}/upload`, {
+        method: 'POST',
+        body: formData
       })
-      .catch(error => console.error('Error:', error));
+        .then(response => {
+          clearSearchResult();
+          for (var i = 0; i < fileField.files.length; i++) {
+            const file = fileField.files[i];
+            addFileToFileList(file);
+            console.log(`Uploaded file ${file.name} (${file.size}) bytes`);
+          }
+          fileField.value = '';
+
+          updateWordCount();
+        })
+        .catch(error => console.error('Error:', error));
+    }
 
     e.preventDefault();
   }
@@ -240,6 +246,7 @@
       .then(wordCountResult => {
         console.log(JSON.stringify(wordCountResult));
         updateGraph(wordCountResult);
+        updateWordcloud(wordCountResult);
       })
       .catch(e => {
         console.log(e);
@@ -247,15 +254,15 @@
 
   }
 
-  function updateGraph(test_data) {
+  function updateGraph(word_data) {
     const graph_height = 300;
     const bar_width = 30;
-    const max_hits = d3.max(test_data, d => d.totalHits);
+    const max_hits = d3.max(word_data, d => d.totalHits);
     const yScale = d3.scaleLinear().domain([0, max_hits]).range([0, graph_height]);
 
     const bars = d3.select("#barchart")
       .selectAll(".barsAndWords")
-      .data(test_data)
+      .data(word_data)
       ;
 
     const newBarGroups = bars
@@ -273,7 +280,6 @@
       .style("stroke", "blue")
       .style("stroke-width", "3px")
       .style("opacity", .25)
-      //.attr("x", bar_width)
       .attr("y", d => graph_height - yScale(d.totalHits))
       ;
 
@@ -282,7 +288,6 @@
       .attr("class", "barchart-text")
       .attr("transform", "translate(" + (bar_width - 4) + "," + (graph_height - 4) + ")rotate(-90)")
       //.style("text-anchor", "middle")
-      .style("font-size", "28px")
       .text(d => d.word)
       ;
 
@@ -290,6 +295,55 @@
       .exit()
       .remove()
       ;
+  }
+
+  function updateWordcloud(word_data) {
+
+    const min_hits = d3.min(word_data, d => d.totalHits);
+    const max_hits = d3.max(word_data, d => d.totalHits);
+
+    const wordcloudGraph = document.getElementById("wordcloud-box");
+
+    const wordsSizeScale = d3.scaleLog()
+      .domain([min_hits, max_hits])
+      .range([10, 100]);
+
+    const layout = d3.layout.cloud()
+      .size([600, 300])
+      .words(word_data.map(function (d) {
+        return { text: d.word, size: wordsSizeScale(d.totalHits) };
+      }))
+      .padding(4)
+      .fontSize(function (d) { return d.size; })
+      .on("end", draw);
+
+    layout.start();
+
+    function draw(words) {
+
+      const cloud =
+        d3.select("#wordcloud")
+          .append("g")
+          .attr("transform", "translate(" + layout.size()[0] / 2 + "," + layout.size()[1] / 2 + ")")
+          .selectAll("text")
+          .data(words)
+        ;
+      const newCloudWords = cloud
+        .enter().append("text")
+        .style("font-size", function (d) { return d.size + "px"; })
+        .attr("text-anchor", "middle")
+        .attr("transform", function (d) {
+          return "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")";
+        })
+        .text(function (d) { return d.text; });
+
+      const removedCloudWords = cloud
+        .exit()
+        .remove()
+        ;
+
+    }
+
   }
 
   function selectDiagram(e) {
@@ -318,23 +372,6 @@
   document.getElementById("upload-form").addEventListener("submit", uploadFiles);
   document.getElementById("clear-search-btn").addEventListener("click", clearSearchResult);
   document.getElementById("diagram-tabs").addEventListener("click", selectDiagram);
-
-  // document.getElementById("barchart-tab").addEventListener("click", selectDiagram('barchart'));
-  // document.getElementById("wordcloud-tab").addEventListener("click", selectDiagram('wordcloud'));
-
-
-  /*
-    const test_data = [
-      { word: "i", totalHits: "7179" },
-      { word: "he", totalHits: "4270" },
-      { word: "his", totalHits: "4221" },
-      { word: "Zamboni!", totalHits: "400" },
-    ];
-
-  updateData(test_data);
-    */
-
-  // update_data(test_data.slice(2));
 
 </script>
 

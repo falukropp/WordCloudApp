@@ -6,12 +6,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import se.falukropp.lucene.dto.CommonWordResult;
+import se.falukropp.lucene.dto.SearchResult;
 import se.falukropp.lucene.service.IndexDirectory;
-import se.falukropp.lucene.service.IndexDirectory.SearchResult;
-import se.falukropp.lucene.service.StorageFileNotFoundException;
 import se.falukropp.lucene.service.StorageService;
 
-import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
@@ -30,11 +29,6 @@ public class WordSearchRestController {
     private
     StorageService storageService;
 
-    @PostConstruct
-    public void init() {
-        indexDirectory.indexDirectory(storageService.getRootLocation());
-    }
-
     @RequestMapping(value = "/search/{word}")
     public SearchResult searchForWord(@PathVariable String word) {
 
@@ -42,7 +36,7 @@ public class WordSearchRestController {
     }
 
     @RequestMapping(value = "/word_count/{n}")
-    public List<IndexDirectory.CommonWordResult> wordCount(@PathVariable Integer n) {
+    public List<CommonWordResult> wordCount(@PathVariable Integer n) {
 
         return indexDirectory.mostCommon(n);
     }
@@ -53,18 +47,13 @@ public class WordSearchRestController {
         for (MultipartFile file : files) {
             try {
                 Path uploadedFile = storageService.store(file);
-                indexDirectory.indexDoc(uploadedFile);
+                indexDirectory.indexSingleDoc(uploadedFile);
             } catch (IOException e) {
                 LOG.error("Could not upload file " + file.getName(), e);
                 throw new RuntimeException(e);
             }
         }
         return ResponseEntity.accepted().build();
-    }
-
-    @ExceptionHandler(StorageFileNotFoundException.class)
-    public ResponseEntity<?> handleStorageFileNotFound(StorageFileNotFoundException exc) {
-        return ResponseEntity.notFound().build();
     }
 
 }

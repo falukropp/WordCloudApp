@@ -19,7 +19,16 @@ public class StorageService {
 
     @Autowired
     public StorageService(StorageProperties properties) {
-        this.rootLocation = Paths.get(properties.getLocation());
+        try {
+            if (properties.getLocation() != null) {
+                this.rootLocation = Paths.get(properties.getLocation());
+                Files.createDirectories(this.rootLocation);
+            } else {
+                this.rootLocation = Files.createTempDirectory("jee_lucene");
+            }
+        } catch (IOException e) {
+            throw new StorageException("Could not create/use storage directory", e);
+        }
     }
 
     public Path getRootLocation() {

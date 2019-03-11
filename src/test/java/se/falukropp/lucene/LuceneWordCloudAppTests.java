@@ -13,6 +13,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import se.falukropp.lucene.dto.CommonWordResult;
 import se.falukropp.lucene.service.IndexDirectory;
 
 import java.nio.file.Files;
@@ -28,7 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @DirtiesContext
 @AutoConfigureMockMvc
-public class DemoApplicationTests {
+public class LuceneWordCloudAppTests {
 
     @Autowired
     private MockMvc mockMvc;
@@ -96,10 +97,10 @@ public class DemoApplicationTests {
     @Test
     public void testMostCommon() throws Exception {
 
-        List<IndexDirectory.CommonWordResult> expectedResult = Arrays.asList(
-                new IndexDirectory.CommonWordResult("i", 7176),
-                new IndexDirectory.CommonWordResult("he", 4270),
-                new IndexDirectory.CommonWordResult("his", 4221)
+        List<CommonWordResult> expectedResult = Arrays.asList(
+                new CommonWordResult("i", 7176),
+                new CommonWordResult("he", 4270),
+                new CommonWordResult("his", 4221)
         );
 
         mockMvc.perform(

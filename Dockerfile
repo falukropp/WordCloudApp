@@ -1,5 +1,4 @@
 FROM java:8
-MAINTAINER ulf.rustas@gmail.com
 EXPOSE 8080
 ENV SPRING_PROFILES_ACTIVE=docker
 VOLUME /var/lucene-storage

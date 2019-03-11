@@ -1,7 +1,7 @@
 package se.falukropp.lucene.service;
 
-/* Based on https://lucene.apache.org/core/6_6_0/demo/src-html/org/apache/lucene/demo/IndexFiles.html
- *  Not much left though.
+/* Started as on https://lucene.apache.org/core/6_6_0/demo/src-html/org/apache/lucene/demo/IndexFiles.html
+ *  Has been changed a lot since then.
  */
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
@@ -41,6 +41,8 @@ import org.apache.lucene.store.Directory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import se.falukropp.lucene.dto.CommonWordResult;
+import se.falukropp.lucene.dto.SearchResult;
 
 import javax.annotation.PostConstruct;
 import java.io.BufferedReader;
@@ -113,7 +115,7 @@ public class IndexDirectory {
             //
             // iwc.setRAMBufferSizeMB(256.0);
 
-            indexDocs(docDir);
+            indexAllDocsUnderDir(docDir);
 
             // NOTE: if you want to maximize search performance,
             // you can optionally call forceMerge here. This can be
@@ -146,13 +148,13 @@ public class IndexDirectory {
      *             files to index
      * @throws IOException If there is a low-level I/O error
      */
-    private void indexDocs(Path path) throws IOException {
+    private void indexAllDocsUnderDir(Path path) throws IOException {
         if (Files.isDirectory(path)) {
             Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
                 @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
                     try {
-                        indexDoc(file, attrs.lastModifiedTime().toMillis());
+                        indexSingleDoc(file, attrs.lastModifiedTime().toMillis());
                     } catch (IOException ignore) {
                         // don't index files that can't be read.
                     }
@@ -160,19 +162,19 @@ public class IndexDirectory {
                 }
             });
         } else {
-            indexDoc(path, Files.getLastModifiedTime(path).toMillis());
+            indexSingleDoc(path, Files.getLastModifiedTime(path).toMillis());
         }
     }
 
-    public void indexDoc(Path file) throws IOException {
-        indexDoc(file, Clock.systemDefaultZone().millis());
+    public void indexSingleDoc(Path file) throws IOException {
+        indexSingleDoc(file, Clock.systemDefaultZone().millis());
         iwriter.commit();
     }
 
     /**
      * Indexes a single document
      */
-    private void indexDoc(Path file, long lastModified) throws IOException {
+    private void indexSingleDoc(Path file, long lastModified) throws IOException {
         try (InputStream stream = Files.newInputStream(file)) {
             // make a new, empty document
             Document doc = new Document();
@@ -238,26 +240,6 @@ public class IndexDirectory {
         return results;
     }
 
-    public static class CommonWordResult {
-        private final String word;
-
-        private final long totalHits;
-
-
-        public String getWord() {
-            return word;
-        }
-
-        public long getTotalHits() {
-            return totalHits;
-        }
-
-        public CommonWordResult(String word, long totalHits) {
-            this.word = word;
-            this.totalHits = totalHits;
-        }
-    }
-
     public SearchResult searchResult(String word) {
         LOG.debug("Searching for " + word);
 
@@ -294,22 +276,4 @@ public class IndexDirectory {
 
     }
 
-    public static class SearchResult {
-        private final List<String> files;
-
-        private final long totalHits;
-
-        SearchResult(List<String> files, long totalHits) {
-            this.files = files;
-            this.totalHits = totalHits;
-        }
-
-        public List<String> getFile() {
-            return files;
-        }
-
-        public long getTotalHits() {
-            return totalHits;
-        }
-    }
 }
