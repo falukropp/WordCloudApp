@@ -111,4 +111,22 @@ public class LuceneWordCloudAppTests {
                 .andDo(print());
 
     }
+
+    @Test
+    public void testInitialFileList() throws Exception {
+
+        List<String> expectedResult = Arrays.asList(
+                "A_Tale_Of-Two_Cities.txt",
+                "Christmas_Carol.txt",
+                "Frankenstein.txt",
+                "Pride_and_Prejudice.txt"
+        );
+
+        mockMvc.perform(
+                MockMvcRequestBuilders.get("/filelist").accept(
+                        MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().json(new ObjectMapper().writeValueAsString(expectedResult)))
+                .andDo(print());
+    }
 }

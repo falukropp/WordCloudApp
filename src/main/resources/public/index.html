@@ -161,23 +161,52 @@
     searchResultList.appendChild(resultsRow);
   }
 
-  function clearSearchResult() {
-    document.getElementById('search-results-box').style.display = 'none';
-
-    const searchResultList = document.getElementById('search-results');
-    while (searchResultList.firstChild) {
-      searchResultList.removeChild(searchResultList.firstChild);
+  function removeAllChildren(elementName) {
+    const element = document.getElementById(elementName);
+    while (element.firstChild) {
+      element.removeChild(element.firstChild);
     }
 
   }
 
-  function addFileToFileList(file) {
+  function clearSearchResult() {
+    document.getElementById('search-results-box').style.display = 'none';
+    removeAllChildren('search-results');
+  }
+
+  function addFileToFileList(fileName) {
     const fileList = document.getElementById("file-list");
     document.getElementById("search-btn").disabled = false;
     const newFileRow = document.createElement("li");
-    newFileRow.appendChild(document.createTextNode(`${file.name} (${file.size}) bytes`));
+    newFileRow.appendChild(document.createTextNode(fileName));
     fileList.appendChild(newFileRow);
   }
+
+  function updateFileList() {
+    removeAllChildren('file-list');
+
+    fetch(`${url_base}/filelist`)
+      .then(response => {
+        if (response.ok) {
+          return response.json();
+        }
+        throw new Error(
+          `Network response was not ok... Got ${response.status} ${response.statusText}`
+        );
+      })
+      .then(fileList => {
+        if (fileList.length === 0) {
+          console.log(`No files indexed`);
+        }
+        fileList.forEach(file => {
+          addFileToFileList(file);
+          console.log(`Initial file ${file}`);
+        }
+        )
+      });
+  }
+
+
 
   function search(e) {
     const term = document.getElementById("term").value;
@@ -218,13 +247,14 @@
       })
         .then(response => {
           clearSearchResult();
+
           for (var i = 0; i < fileField.files.length; i++) {
             const file = fileField.files[i];
-            addFileToFileList(file);
             console.log(`Uploaded file ${file.name} (${file.size}) bytes`);
           }
           fileField.value = '';
 
+          updateFileList();
           updateWordCount();
         })
         .catch(error => console.error('Error:', error));
@@ -372,6 +402,9 @@
   document.getElementById("upload-form").addEventListener("submit", uploadFiles);
   document.getElementById("clear-search-btn").addEventListener("click", clearSearchResult);
   document.getElementById("diagram-tabs").addEventListener("click", selectDiagram);
+
+  updateFileList();
+  updateWordCount();
 
 </script>
 

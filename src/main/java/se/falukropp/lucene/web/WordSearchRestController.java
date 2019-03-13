@@ -14,6 +14,7 @@ import se.falukropp.lucene.service.StorageService;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.SortedSet;
 
 @CrossOrigin
 @RestController
@@ -29,16 +30,22 @@ public class WordSearchRestController {
     private
     StorageService storageService;
 
-    @RequestMapping(value = "/search/{word}")
+    @GetMapping(value = "/search/{word}")
     public SearchResult searchForWord(@PathVariable String word) {
 
         return indexDirectory.searchResult(word);
     }
 
-    @RequestMapping(value = "/word_count/{n}")
+    @GetMapping(value = "/word_count/{n}")
     public List<CommonWordResult> wordCount(@PathVariable Integer n) {
 
         return indexDirectory.mostCommon(n);
+    }
+
+    @GetMapping(value = "/filelist")
+    public SortedSet<String> filelist() {
+
+        return indexDirectory.getAllFiles();
     }
 
     @PostMapping("/upload")

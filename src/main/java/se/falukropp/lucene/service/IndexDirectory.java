@@ -33,9 +33,7 @@ import org.apache.lucene.misc.HighFreqTerms;
 import org.apache.lucene.misc.TermStats;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.ScoreDoc;
-import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.*;
 import org.apache.lucene.store.ByteBuffersDirectory;
 import org.apache.lucene.store.Directory;
 import org.slf4j.Logger;
@@ -56,10 +54,7 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Clock;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 /**
  * Index all text files under a directory.
@@ -137,7 +132,10 @@ public class IndexDirectory {
 
     }
 
-    /**
+    // TODO : This type of method should probably be moved to storage service instead.
+
+    /***
+     * <p>
      * Indexes the given file using the given writer, or if a directory is given,
      * recurses over files and directories found under the given directory.
      * <p>
@@ -183,7 +181,7 @@ public class IndexDirectory {
             // field that is indexed (i.e. searchable), but don't tokenize
             // the field into separate words and don't index term frequency
             // or positional information:
-            Field pathField = new StringField("path", file.toString(), Field.Store.YES);
+            Field pathField = new StringField("path", file.getFileName().toString(), Field.Store.YES);
             doc.add(pathField);
 
             // Add the last modified date of the file a field named "modified".
@@ -240,6 +238,31 @@ public class IndexDirectory {
         return results;
     }
 
+    public SortedSet<String> getAllFiles() {
+        SortedSet<String> fileNames = new TreeSet<>();
+        try {
+            DirectoryReader ireader = DirectoryReader.open(directory);
+            IndexSearcher isearcher = new IndexSearcher(ireader);
+
+            Query query = new MatchAllDocsQuery();
+            TopDocs hits = isearcher.search(query, 1000);
+
+            // Iterate through the results:
+            for (ScoreDoc hit : hits.scoreDocs) {
+                Document hitDoc = isearcher.doc(hit.doc);
+                fileNames.add(hitDoc.get("path"));
+            }
+            ireader.close();
+
+
+        } catch (IOException e) {
+            LOG.error("Could not get all files", e);
+        }
+
+        return fileNames;
+    }
+
+
     public SearchResult searchResult(String word) {
         LOG.debug("Searching for " + word);
 
@@ -252,7 +275,7 @@ public class IndexDirectory {
             IndexSearcher isearcher = new IndexSearcher(ireader);
             // Parse a simple query that searches for "text":
             QueryParser parser = new QueryParser("contents", analyzer);
-            org.apache.lucene.search.Query query = parser.parse(word);
+            Query query = parser.parse(word);
             TopDocs topDocs = isearcher.search(query, 1000);
 
             Term term = new Term("contents", word.toLowerCase());
